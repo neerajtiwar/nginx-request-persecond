@@ -1,0 +1,55 @@
+NGINX REQUESTS MONITORING
+
+   1) install nginx with http_stub_status module, to check if it is installed with your nginx use below command:
+      nginx -V 2>&1 | grep -o with-http_stub_status_module 
+      The status module is enabled if you see with-http_stub_status_module as output in the terminal.
+      If that command returns no output, you will need to enable the status module. You can use the --with-http_stub_status_module configuration parameter when building NGINX from source.
+
+   2) After verifying the module is enabled or enabling it yourself, you will also need to modify your NGINX configuration to set up a locally accessible URL (e.g., /nginx_status) for the status page:
+       server {
+       listen       80;
+       server_name  localhost;
+
+           location /nginx_status {
+           stub_status;
+           access_log off;
+           allow 192.168.33.1;
+           }
+      }
+    
+    you can allow the desired IPs from which you want to access the nginx_status, once the above changes are made, test the nginx configuration using "nginx -t" and reload the nginx process using 
+     "nginx -s reload".
+  
+    3)  Run the python script "nginx_rps.py" from the whitelisted servers, in my case i.e. "192.168.33.1", with "url" "threshold" and "interval" as a command line arguments:
+         
+         for Ex: python3 nginx_rps.py "http://192.168.33.10/nginx_status" 1000 1
+
+         you will see output like below:
+
+         ----------------------------------------------
+         request per second = 8
+         request per second = 9
+
+        Please install following modules before running the script as it requires these modules to run:
+
+        (requests, socket, datetime, re)
+
+    4) Now in the other terminsl run the test load on nginx server using below curl command:
+        
+            for i in {1..10000}; do curl -I "http://192.168.33.10/"; done
+    
+        As curl is not made for generating concurrent performace load, we can also use "Apache Becnhmark" tool to generate the load:
+
+           ab -kc 3 -n 10000 http://192.168.33.10/
+
+     5) As per the scripts logic it will write in the "Alert" file inside the same directory where the script is placed, if RPS goes beyond 1000 per second. 
+        You can increase the "sleep" parameter in the script to collect the RPS "hourly" or any other intervals.        
+        
+        Below is the sample output from file:
+        -----------------------------------------------
+        30 Jul 2019 03:25:41	Alert!! 	2554
+        30 Jul 2019 03:25:42	Alert!! 	2887
+        30 Jul 2019 03:25:43	Alert!! 	2924
+        30 Jul 2019 03:26:07	Alert!! 	2867
+
+         
