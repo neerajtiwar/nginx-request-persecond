@@ -1,0 +1,17 @@
+---
+
+name: manual_workflow
+
+on:
+  workflow_dispatch: ~
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo ${{ github.workspace }}
+          echo $GITHUB_WORKSPACE
